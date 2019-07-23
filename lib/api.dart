@@ -30,26 +30,33 @@ Future<http.Response> callEndpoint(Uri uri, ResponseFunction,
   }
   return await ResponseFunction(client, uri);
 }
+
 ///
 /// Extracts the response accordingly of the response statuscode.
 /// Also see [ApiResponse]
 ///
-Future<ApiResponse<T>> extractResponse<T>(http.Response response,Serializer<T> serializer) async {
+Future<ApiResponse<T>> extractResponse<T>(
+    http.Response response, Serializer<T> serializer) async {
   developer.log("$response");
-  final serialisation = <E>(Serializer<E> serializer) => serializers.deserializeWith(serializer,json.decode(response.body));
-  if(response.statusCode==200) {
-    return  ApiResponse.normal( serialisation<T>(serializer));
-  }else if(response.statusCode == 422){
-    return ApiResponse.genericError( serialisation<GenericErrorModel>(GenericErrorModel.serializer));
+  final serialisation = <E>(Serializer<E> serializer) =>
+      serializers.deserializeWith(serializer, json.decode(response.body));
+  if (response.statusCode == 200) {
+    return ApiResponse.normal(serialisation<T>(serializer));
+  } else if (response.statusCode == 422) {
+    return ApiResponse.genericError(
+        serialisation<GenericErrorModel>(GenericErrorModel.serializer));
   }
   return ApiResponse.unexpectedError(response.body);
 }
 
-typedef ConversionFunction<T,E> =  T Function(E conversionType);
-Future<ApiResponse<T>> switchFirstType<T,E>(ApiResponse<E> apiResponse,ConversionFunction<T,E> conversionFunction) async {
-  return apiResponse.join((first)=> ApiResponse.normal(conversionFunction(first)), (second)=> ApiResponse.genericError(second), (error)=> ApiResponse.unexpectedError(error));
+typedef ConversionFunction<T, E> = T Function(E conversionType);
+Future<ApiResponse<T>> switchFirstType<T, E>(ApiResponse<E> apiResponse,
+    ConversionFunction<T, E> conversionFunction) async {
+  return apiResponse.join(
+      (first) => ApiResponse.normal(conversionFunction(first)),
+      (second) => ApiResponse.genericError(second),
+      (error) => ApiResponse.unexpectedError(error));
 }
-
 
 ///
 /// return either [User] or [GenericErrorModel] or [Null] if there was an error different from 422
@@ -61,10 +68,16 @@ Future<ApiResponse<User>> login(LoginUser user, {http.Client client}) async {
       buildUri("/users/login "),
       (http.Client _client, Uri uri) async => await _client.post(uri,
           body: serializers.serializeWith(
-              LoginUserRequest.serializer, builder.build())),client: client);
-  ApiResponse<UserResponse> extractedResponse = await extractResponse<UserResponse>(response, UserResponse.serializer);
-  return  await switchFirstType(extractedResponse, (UserResponse userResponse) => userResponse.user);
+              LoginUserRequest.serializer, builder.build())),
+      client: client);
+  return await buildResponse(response);
+}
 
+Future<ApiResponse<User>> buildResponse(http.Response response) async {
+  ApiResponse<UserResponse> extractedResponse =
+      await extractResponse<UserResponse>(response, UserResponse.serializer);
+  return await switchFirstType(
+      extractedResponse, (UserResponse userResponse) => userResponse.user);
 }
 
 Future<ApiResponse<List<Article>>> getArticles() async {
@@ -113,26 +126,25 @@ Future<bool> checkPassword(String password) async {
   });
   return passwordFound;
 }
+
 ///
 /// Holds all possible values for a response. A Response can contain following values
 /// either a [T] which is the value that we expect from the server, either [GenericErrorModel] if some of the values are wrong from the last Request or
 /// a [String] if there was a Servererror or authorization error.
 ///
-class ApiResponse<T> extends Union3Impl<T,GenericErrorModel,String>{
-  
-
+class ApiResponse<T> extends Union3Impl<T, GenericErrorModel, String> {
   ApiResponse(Union3<T, GenericErrorModel, String> union) : super(union);
 
   factory ApiResponse.genericError(GenericErrorModel error) {
-    return ApiResponse(Triplet<T,GenericErrorModel,String>().second(error));
+    return ApiResponse(Triplet<T, GenericErrorModel, String>().second(error));
   }
 
-  factory ApiResponse.normal(T normal){
-    return ApiResponse(Triplet<T,GenericErrorModel,String>().first(normal));
+  factory ApiResponse.normal(T normal) {
+    return ApiResponse(Triplet<T, GenericErrorModel, String>().first(normal));
   }
 
-  factory ApiResponse.unexpectedError(String errorMessage){
-    return ApiResponse(Triplet<T,GenericErrorModel,String>().third(errorMessage));
+  factory ApiResponse.unexpectedError(String errorMessage) {
+    return ApiResponse(
+        Triplet<T, GenericErrorModel, String>().third(errorMessage));
   }
-
 }

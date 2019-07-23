@@ -1,11 +1,10 @@
-import 'package:flutter_test/flutter_test.dart';
-
 import 'dart:convert';
-import 'package:built_collection/built_collection.dart';
-import 'package:real_world_flutter_app/models/data_model.dart';
-import 'package:real_world_flutter_app/api.dart';
+
+import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:mockito/mockito.dart';
+import 'package:real_world_flutter_app/api.dart';
+import 'package:real_world_flutter_app/models/data_model.dart';
 
 class MockClient extends Mock implements http.Client {}
 

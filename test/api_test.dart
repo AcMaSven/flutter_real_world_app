@@ -50,7 +50,7 @@ void main() {
         expect(errorMessage, isNull);
       });
     });
-    test("Wrong email or password", () async {
+    test("Wrong email or password generic error", () async {
       final client = new MockClient();
       when(client.post(any, body: argThat(isNotNull, named: 'body')))
           .thenAnswer((_) async => http.Response(
@@ -91,6 +91,43 @@ void main() {
         expect(genericError, isNull);
       }, (message){
         expect(message, "Unauthorized");
+      });
+    });
+  });
+  group("Article tests", (){
+    test("Global article list", () async {
+      final client = MockClient();
+      when(client.get(buildUri("/articles"))).thenAnswer((_) async => http.Response(json.encode({
+        "articles":[
+          {
+            "slug": "slug",
+            "title": "testtitle",
+            "description": "Test",
+            "body": "test",
+            "tagList": ["first tag","second tag"],
+            "createdAt": "2019-07-22",
+            "updatedAt": "2019-07-22",
+            "favorited": false,
+            "favoritesCount": 0,
+            "author": {
+              "username": "test",
+              "bio": "bio",
+              "image": "image",
+              "following": false
+            }
+
+          }
+        ],
+        "articlesCount": 2
+      }),200));
+      final articlesResponse = await getArticles(client: client);
+      articlesResponse.join((articles){
+        expect(articles.articles, isNotNull);
+        expect(articles.articlesCount, 2);
+      }, (genericError){
+        expect(genericError, isNull);
+      }, (error){
+        expect(error, isNull);
       });
     });
   });

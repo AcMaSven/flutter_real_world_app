@@ -25,6 +25,7 @@ typedef ResponseFunction = Future<http.Response> Function(
 Uri buildUri(String path) {
   return Uri.parse(_url + path);
 }
+
 ///Call the api endpoint
 Future<http.Response> callEndpoint(Uri uri, ResponseFunction responseFunction,
     {http.Client client}) async {
@@ -62,8 +63,21 @@ Future<ApiResponse<T>> switchFirstType<T, E>(ApiResponse<E> apiResponse,
       (error) => ApiResponse.unexpectedError(error));
 }
 
+Future<ApiResponse<T>> buildResponse<T, E>(
+    http.Response response, Serializer<E> responseSerializer,
+    {ConversionFunction<T, E> conversionFunction}) async {
+  ApiResponse<E> extractedResponse =
+      await extractResponse<E>(response, responseSerializer);
+  if (conversionFunction == null) {
+    return await switchFirstType<T, E>(
+        extractedResponse, (E type) => type as T);
+  }
+  return await switchFirstType<T, E>(extractedResponse, conversionFunction);
+}
+
 ///
-/// return either [User] or [GenericErrorModel] or [Null] if there was an error different from 422
+/// Login specific User
+/// also see [ApiResponse]
 ///
 Future<ApiResponse<User>> login(LoginUser user, {http.Client client}) async {
   LoginUserRequestBuilder builder = LoginUserRequestBuilder()
@@ -74,27 +88,20 @@ Future<ApiResponse<User>> login(LoginUser user, {http.Client client}) async {
           body: serializers.serializeWith(
               LoginUserRequest.serializer, builder.build())),
       client: client);
-  return await buildResponse(
-      response,
-      (UserResponse userResponse) => userResponse.user,
-      UserResponse.serializer);
+  return await buildResponse(response, UserResponse.serializer,
+      conversionFunction: (UserResponse userResponse) => userResponse.user);
 }
 
-Future<ApiResponse<T>> buildResponse<T, E>(
-    http.Response response,
-    ConversionFunction<T, E> conversionFunction,
-    Serializer<E> responseSerializer) async {
-  ApiResponse<E> extractedResponse =
-      await extractResponse<E>(response, responseSerializer);
-  return await switchFirstType<T, E>(extractedResponse, conversionFunction);
-}
-
-Future<ApiResponse<List<Article>>> getArticles() async {
-  final response = await http.get(buildUri("/articles"));
-
-  MultipleArticleResponse multipleArticleResponse = serializers.deserializeWith(
-      MultipleArticleResponse.serializer, json.decode(response.body));
-  return null;
+///
+/// Fetch gloabl article List
+/// see also [ApiResponse]
+///
+Future<ApiResponse<MultipleArticleResponse>> getArticles(
+    {http.Client client}) async {
+  final response = await callEndpoint(buildUri("/articles"),
+      (http.Client _client, Uri uri) async => await _client.get(uri),
+      client: client);
+  return await buildResponse(response, MultipleArticleResponse.serializer);
 }
 
 ///
@@ -103,37 +110,6 @@ Future<ApiResponse<List<Article>>> getArticles() async {
 Future<Object> signup(NewUser user) async {
   NewUserRequestBuilder request = NewUserRequestBuilder()
     ..user = (NewUserBuilder()..replace(user));
-  final response = await http.post(buildUri("/users"),
-      body: serializers.serializeWith(
-          NewUserRequest.serializer, json.encode(request.build())));
-  if (response.statusCode == 200) {
-    UserResponse userResponse = serializers.deserializeWith(
-        UserResponse.serializer, json.decode(response.body));
-    return userResponse.user;
-  }
-  throw ("Error");
-}
-
-Future<bool> checkPassword(String password) async {
-  bool passwordFound = false;
-  String passwords = null;
-  final hashedPassword = sha1.convert(utf8.encode(password));
-
-  print(hashedPassword.toString());
-  final testinHash = hashedPassword.toString().substring(0, 5);
-
-  final response = await http
-      .get(Uri.parse("https://api.pwnedpasswords.com/range/$testinHash"));
-  passwords = response.body;
-
-  passwords.split("\n").forEach((hashComb) {
-    final hash = hashComb.substring(0, hashComb.lastIndexOf(":")).toLowerCase();
-    print(testinHash + hash);
-    if (hashedPassword.toString() == testinHash + hash) {
-      passwordFound = true;
-    }
-  });
-  return passwordFound;
 }
 
 ///

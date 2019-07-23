@@ -9,8 +9,8 @@ import 'package:real_world_flutter_app/models/data_model.dart';
 class MockClient extends Mock implements http.Client {}
 
 void main() {
-  group("Login tests", () {
-    test("Sucessfull login", () async {
+  group("Endpoint call tests", () {
+    test("Succesfull call", () async {
       final client = new MockClient();
       when(client.post(any, body: argThat(isNotNull, named: 'body')))
           .thenAnswer((_) async => http.Response(

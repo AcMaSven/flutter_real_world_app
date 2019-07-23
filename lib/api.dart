@@ -25,7 +25,7 @@ typedef ResponseFunction = Future<http.Response> Function(
 Uri buildUri(String path) {
   return Uri.parse(_url + path);
 }
-
+///Call the api endpoint
 Future<http.Response> callEndpoint(Uri uri, ResponseFunction responseFunction,
     {http.Client client}) async {
   if (client == null) {

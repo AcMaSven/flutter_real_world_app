@@ -81,52 +81,56 @@ void main() {
       final client = new MockClient();
       when(client.post(any, body: argThat(isNotNull, named: 'body')))
           .thenAnswer((_) async => http.Response('Unauthorized', 401));
-      final loginResponse = await login((LoginUserBuilder()
-            ..email = "test"
-            ..password = "egal")
-          .build(),client: client);
-      loginResponse.join((normal){
+      final loginResponse = await login(
+          (LoginUserBuilder()
+                ..email = "test"
+                ..password = "egal")
+              .build(),
+          client: client);
+      loginResponse.join((normal) {
         expect(normal, isNull);
-      }, (genericError){
+      }, (genericError) {
         expect(genericError, isNull);
-      }, (message){
+      }, (message) {
         expect(message, "Unauthorized");
       });
     });
   });
-  group("Article tests", (){
+  group("Article tests", () {
     test("Global article list", () async {
       final client = MockClient();
-      when(client.get(buildUri("/articles"))).thenAnswer((_) async => http.Response(json.encode({
-        "articles":[
-          {
-            "slug": "slug",
-            "title": "testtitle",
-            "description": "Test",
-            "body": "test",
-            "tagList": ["first tag","second tag"],
-            "createdAt": "2019-07-22",
-            "updatedAt": "2019-07-22",
-            "favorited": false,
-            "favoritesCount": 0,
-            "author": {
-              "username": "test",
-              "bio": "bio",
-              "image": "image",
-              "following": false
-            }
-
-          }
-        ],
-        "articlesCount": 2
-      }),200));
+      when(client.get(buildUri("/articles")))
+          .thenAnswer((_) async => http.Response(
+              json.encode({
+                "articles": [
+                  {
+                    "slug": "slug",
+                    "title": "testtitle",
+                    "description": "Test",
+                    "body": "test",
+                    "tagList": ["first tag", "second tag"],
+                    "createdAt": "2019-07-22",
+                    "updatedAt": "2019-07-22",
+                    "favorited": false,
+                    "favoritesCount": 0,
+                    "author": {
+                      "username": "test",
+                      "bio": "bio",
+                      "image": "image",
+                      "following": false
+                    }
+                  }
+                ],
+                "articlesCount": 2
+              }),
+              200));
       final articlesResponse = await getArticles(client: client);
-      articlesResponse.join((articles){
+      articlesResponse.join((articles) {
         expect(articles.articles, isNotNull);
         expect(articles.articlesCount, 2);
-      }, (genericError){
+      }, (genericError) {
         expect(genericError, isNull);
-      }, (error){
+      }, (error) {
         expect(error, isNull);
       });
     });

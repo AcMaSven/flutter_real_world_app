@@ -1,34 +1,37 @@
 library api;
 
-export 'api.dart';
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:built_value/serializer.dart';
 import 'package:crypto/crypto.dart';
-
-import 'dart:developer' as developer;
-
-import 'package:sealed_unions/sealed_unions.dart';
+import 'package:http/http.dart' as http;
 import 'package:real_world_flutter_app/models/data_model.dart';
 import 'package:real_world_flutter_app/models/serializers.dart';
-import 'package:http/http.dart' as http;
+import 'package:sealed_unions/sealed_unions.dart';
 
+export 'api.dart';
+
+/// Main url for the demo app api
 const _url = "https://conduit.productionready.io/api";
 
+/// Function to get the appropriate response
 typedef ResponseFunction = Future<http.Response> Function(
     http.Client client, Uri url);
 
+/// Build uri in respect to [_url]
+///
 Uri buildUri(String path) {
   return Uri.parse(_url + path);
 }
 
-Future<http.Response> callEndpoint(Uri uri, ResponseFunction,
+Future<http.Response> callEndpoint(Uri uri, ResponseFunction responseFunction,
     {http.Client client}) async {
   if (client == null) {
-    return ResponseFunction(new http.Client(), uri);
+    return responseFunction(new http.Client(), uri);
   }
-  return await ResponseFunction(client, uri);
+  return await responseFunction(client, uri);
 }
 
 ///
@@ -50,6 +53,7 @@ Future<ApiResponse<T>> extractResponse<T>(
 }
 
 typedef ConversionFunction<T, E> = T Function(E conversionType);
+
 Future<ApiResponse<T>> switchFirstType<T, E>(ApiResponse<E> apiResponse,
     ConversionFunction<T, E> conversionFunction) async {
   return apiResponse.join(
@@ -70,14 +74,19 @@ Future<ApiResponse<User>> login(LoginUser user, {http.Client client}) async {
           body: serializers.serializeWith(
               LoginUserRequest.serializer, builder.build())),
       client: client);
-  return await buildResponse(response);
+  return await buildResponse(
+      response,
+      (UserResponse userResponse) => userResponse.user,
+      UserResponse.serializer);
 }
 
-Future<ApiResponse<User>> buildResponse(http.Response response) async {
-  ApiResponse<UserResponse> extractedResponse =
-      await extractResponse<UserResponse>(response, UserResponse.serializer);
-  return await switchFirstType(
-      extractedResponse, (UserResponse userResponse) => userResponse.user);
+Future<ApiResponse<T>> buildResponse<T, E>(
+    http.Response response,
+    ConversionFunction<T, E> conversionFunction,
+    Serializer<E> responseSerializer) async {
+  ApiResponse<E> extractedResponse =
+      await extractResponse<E>(response, responseSerializer);
+  return await switchFirstType<T, E>(extractedResponse, conversionFunction);
 }
 
 Future<ApiResponse<List<Article>>> getArticles() async {

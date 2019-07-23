@@ -30,7 +30,10 @@ Future<http.Response> callEndpoint(Uri uri, ResponseFunction,
   }
   return await ResponseFunction(client, uri);
 }
-
+///
+/// Extracts the response accordingly of the response statuscode.
+/// Also see [ApiResponse]
+///
 Future<ApiResponse<T>> extractResponse<T>(http.Response response,Serializer<T> serializer) async {
   developer.log("$response");
   final serialisation = <E>(Serializer<E> serializer) => serializers.deserializeWith(serializer,json.decode(response.body));
@@ -110,7 +113,11 @@ Future<bool> checkPassword(String password) async {
   });
   return passwordFound;
 }
-
+///
+/// Holds all possible values for a response. A Response can contain following values
+/// either a [T] which is the value that we expect from the server, either [GenericErrorModel] if some of the values are wrong from the last Request or
+/// a [String] if there was a Servererror or authorization error.
+///
 class ApiResponse<T> extends Union3Impl<T,GenericErrorModel,String>{
   
 

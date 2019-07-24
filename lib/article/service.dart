@@ -14,26 +14,26 @@ class ArticleService {
     }
   }
 
-  Future<ApiResponse<MultipleArticleResponse>> globals({User user}) async {
+  Future<ApiResponse<MultipleArticleResponse>> globals({String token}) async {
     final response = await callEndpoint(
         buildUri("/articles"),
         (http.Client _client, Uri uri) async =>
-            await _client.get(uri, headers: createAuthHeader(user: user)),
+            await _client.get(uri, headers: createAuthHeader(token: token)),
         client: _client);
     return await buildResponse(response, MultipleArticleResponse.serializer);
   }
 
-  Future<ApiResponse<MultipleArticleResponse>> followings(User user) async {
+  Future<ApiResponse<MultipleArticleResponse>> followings(String token) async {
     final response = await callEndpoint(
         buildUri("/articles/feed"),
         (http.Client _client, Uri uri) async =>
-            await _client.get(uri, headers: createAuthHeader(user: user)),
+            await _client.get(uri, headers: createAuthHeader(token: token)),
         client: _client);
     return await buildResponse(response, MultipleArticleResponse.serializer);
   }
 
   Future<ApiResponse<SingleArticleResponse>> create(
-      NewArticle article, User user) async {
+      NewArticle article, String token) async {
     final response = await callEndpoint(
         buildUri("/articles"),
         (http.Client _client, Uri uri) async => await _client.post(uri,
@@ -42,27 +42,27 @@ class ArticleService {
                 (NewArticleRequestBuilder()
                       ..article = (NewArticleBuilder()..replace(article)))
                     .build()),
-            headers: createAuthHeader(user: user)),
+            headers: createAuthHeader(token: token)),
         client: _client);
     return await buildResponse(response, SingleArticleResponse.serializer);
   }
 
   Future<ApiResponse<SingleArticleResponse>> one(String slug,
-      {User user}) async {
+      {String token}) async {
     final response = await callEndpoint(
         buildUri("/articles/$slug"),
         (http.Client _client, Uri uri) async =>
-            _client.get(uri, headers: createAuthHeader(user: user)),
+            _client.get(uri, headers: createAuthHeader(token: token)),
         client: _client);
     return await buildResponse(response, SingleArticleResponse.serializer);
   }
 
   Future<ApiResponse<SingleArticleResponse>> update(
-      String slug, UpdateArticle article, User user) async {
+      String slug, UpdateArticle article, String token) async {
     final response = await callEndpoint(
         buildUri("/articles/$slug"),
         (http.Client _client, Uri uri) async => _client.put(uri,
-            headers: createAuthHeader(user: user),
+            headers: createAuthHeader(token: token),
             body: serializers.serializeWith(
                 UpdateArticleRequest.serializer,
                 (UpdateArticleRequestBuilder()
@@ -72,11 +72,11 @@ class ArticleService {
     return await buildResponse(response, SingleArticleResponse.serializer);
   }
 
-  Future<ApiResponse<String>> delete(String slug, User user) async {
+  Future<ApiResponse<String>> delete(String slug, String token) async {
     final response = await callEndpoint(
         buildUri("/articles/$slug"),
         (http.Client _client, Uri uri) async =>
-            _client.delete(uri, headers: createAuthHeader(user: user)),
+            _client.delete(uri, headers: createAuthHeader(token: token)),
         client: _client);
 
     return await buildResponse(response, DefaultSerializer.string);

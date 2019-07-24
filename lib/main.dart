@@ -6,6 +6,9 @@ import 'dart:developer' as developer;
 import 'api.dart';
 import 'package:real_world_flutter_app/ui/login.dart';
 import 'package:real_world_flutter_app/ui/signup.dart';
+import 'package:real_world_flutter_app/article/article_list.dart';
+
+
 void main() => runApp(MyApp());
 
 class MyApp extends StatelessWidget {
@@ -36,69 +39,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatefulWidget {
-    @override
-  State<StatefulWidget> createState() {
-    return new MyHomePageState();
-
-  }
-}
-
-class MyHomePageState extends State<MyHomePage>{
-  List<Article> _articles = [];
-
-  @override
-  void initState() {
-    super.initState();
-    getArticles().then((articles){
-      setState(() {
-
-      });
-    });
-
-  }
-
-  List<Widget> buildListTiles(){
-    return _articles.map((article)=> ListTile(
-      leading: CircleAvatar(
-        child:  Image.network(article.author.image,scale: 0.2),
-
-      ),
-      title: Text(article.title),
-      subtitle: Text(article.description),
-
-
-    )).toList();
-  }
-
+class MyHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-
-    return Scaffold(
-
-      body: RefreshIndicator(
-        onRefresh: () async {
-          getArticles().then((articles){
-            setState(() {
-
-            });
-          });
-        },
-        child: AnimatedCrossFade(
-          duration: Duration(milliseconds: 300),
-          firstChild: Center(
-            child: CircularProgressIndicator(),
-          ),
-          secondChild: ListView(children: buildListTiles()),
-          crossFadeState: _articles != null
-          ? CrossFadeState.showSecond
-          : CrossFadeState.showFirst,
-        ),
-      ),
-      bottomNavigationBar: BottomAppBar(
-        child: Navbar()
-      ),
-    );
+    return new ArticleListWidget(null);
   }
+
 }
+
 

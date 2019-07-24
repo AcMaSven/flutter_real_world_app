@@ -26,6 +26,18 @@ Uri buildUri(String path) {
   return Uri.parse(_url + path);
 }
 
+Map<String,String> createAuthHeader({String token,User user}){
+  if(user!=null) {
+    return {"Authorization": "Token ${user?.token}"};
+  }else if(token != null){
+    return {"Authorization": "Token $token"};
+  }
+  return {};
+}
+
+
+
+
 ///Call the api endpoint
 Future<http.Response> callEndpoint(Uri uri, ResponseFunction responseFunction,
     {http.Client client}) async {

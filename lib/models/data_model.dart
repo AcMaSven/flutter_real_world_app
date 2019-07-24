@@ -303,8 +303,9 @@ abstract class TagsResponse
   static Serializer<TagsResponse> get serializer => _$tagsResponseSerializer;
 }
 
-
-
+class DefaultSerializer{
+  static Serializer<String> get string => Serializers().serializerForType(String);
+}
 
 
 
